@@ -6,59 +6,43 @@
   Version    : 0.0.1
 */
 
-// Libraires 
-#include <Arduino.h>
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SH110X.h>
 #include <Adafruit_AHTX0.h>
-#include "WIFIConnector_MKR1000.h"
-#include "MQTTConnector.h"
+#include <Fonts/FreeSans9pt7b.h>
 
-// Declaration Objet aht 
+
 Adafruit_AHTX0 aht;
-
-// Constante intervale du temps 
-const int DELAY = 10000; 
-
-//variables 
-unsigned int TempsAvant; 
-float Temperature, Humidity; 
 
 void setup() {
 
-      Serial.begin(9600); // moniteur serie 
+  Serial.begin(9600);
 
-      wifiConnect();      //Branchement au réseau WIFI
-      MQTTConnect();     //Branchement au MQTT
+  // Show image buffer on the display hardware.
+  // Since the buffer is intialized with an Adafruit splashscreen
+  // internally, this will display the splashscreen.
 
-    // Test si y a un aht20 brancher en I2C 
-      if (! aht.begin()) {
-        Serial.println("Could not find AHT20 Check wiring");
-        while (1) delay(10);
-      }
-      Serial.println("AHT20 found");
+  delay(3000);
+
+
+  if (aht.begin()) {
+    Serial.println("Found AHT20");
+  } else {
+    Serial.println("Didn't find AHT20");
+  }  
+  
+
+
 }
 
 void loop() {
-
-    if (millis() - TempsAvant > DELAY) {
-
-          sensors_event_t humidity, temp; // declaration event 
-          aht.getEvent(&humidity, &temp); 
-          Temperature = temp.temperature; // capter temperature 
-          Humidity = humidity.relative_humidity; // capter humidity  
-          Serial.print("Temperature: "); 
-          Serial.print(Temperature);  // affichage temperature 
-          Serial.println(" C");
-          Serial.print("Humidity: ");
-          Serial.print(Humidity); // affichage humidity  
-          Serial.println("% rH");
-
-
-          // Envoi de donnees sur ThingsBoard
-          appendPayload("Temperature", Temperature);  //Ajout de la donnée temperature au message MQTT
-          appendPayload("Humidity", Humidity); //Ajout de la donnée humidity au message MQTT
-          sendPayload();  //Envoie du message via le protocole MQTT
-
-          TempsAvant = millis();
-    }
+  sensors_event_t humidity, temp;
   
+  aht.getEvent(&humidity, &temp);// populate temp and humidity objects with fresh data
+
+  Serial.println(temp.temperature);
+
+  delay(5000);
 }
